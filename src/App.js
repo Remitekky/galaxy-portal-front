@@ -87,8 +87,20 @@ export default function App() {
         // Goerli : 0x7bd43F22167B7f066eeA06b80d992957EdBB413a
         const galaxyPortalContract = new ethers.Contract(contractAddress, contractABI, signer);
 
+        // Execute the getTotalStars function of the smart contract
         let count = await galaxyPortalContract.getTotalStars();
-        console.log("Retrieved total stars count from the blockchain : ", count.toNumber());
+        console.log("[Before star throwing] - Retrieved total stars count from the blockchain : ", count.toNumber());
+
+        // Broadcast a Txn for the execution of star function. Metamask notification to approve the transaction
+        const starTxn = await galaxyPortalContract.star();
+        console.log("Mining...", starTxn.hash);
+
+        // Waiting the execution of star function 
+        await starTxn.wait();
+        console.log("Mined -- ", starTxn.hash);
+
+        count = await galaxyPortalContract.getTotalStars();
+        console.log("[After star throwing] - Retrieved total stars count from the blockchain : ", count.toNumber());
       } else {
         console.log("Ethereum object doesn't exist!");
       }
