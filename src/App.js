@@ -1,12 +1,23 @@
-import * as React from "react";
+import { useEffect } from "react";
 // import { ethers } from "ethers";
 import './App.css';
 
 export default function App() {
 
+  // When logged /w metamask, an etehreum object is injected into window
+  const getEthereumObject = () => window.ethereum;
+  
   const star = () => {
-
+    
   }
+
+  useEffect(() => {
+    if (getEthereumObject) {
+      console.log("Your are logged with your metamask wallet address", getEthereumObject());
+    } else {
+      console.log("Please connect your metamask wallet");
+    }
+  }, []);
 
   return (
     <div className="mainContainer">
