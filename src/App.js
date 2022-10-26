@@ -5,6 +5,8 @@ import './App.css';
 
 export default function App() {
   const [currentAccount, setCurrentAccount] = useState("");
+  const [totalStars, setTotalStars] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const contractAddress = "0x7bd43F22167B7f066eeA06b80d992957EdBB413a";
   const contractABI = galaxyPortal.abi;
@@ -14,6 +16,23 @@ export default function App() {
       const account = await findMetaMaskAccount();
       if (account !== null) {
         setCurrentAccount(account);
+
+        // Retrieve the total amount of stars from the SM
+        setLoading(true);
+        const { ethereum } = window;
+
+        try {
+          const provider = new ethers.providers.Web3Provider(ethereum);
+          const signer = provider.getSigner();
+          const galaxyPortalContract = new ethers.Contract(contractAddress, contractABI, signer);
+  
+          let count = await galaxyPortalContract.getTotalStars();
+          setTotalStars(count.toNumber());
+          setLoading(false);
+        } catch (error) {
+          console.error(error);
+        }
+
       }
     }
 
@@ -93,14 +112,17 @@ export default function App() {
 
         // Broadcast a Txn for the execution of star function. Metamask notification to approve the transaction
         const starTxn = await galaxyPortalContract.star();
+        setLoading(true);
         console.log("Mining...", starTxn.hash);
 
         // Waiting the execution of star function 
         await starTxn.wait();
+        setLoading(false);
         console.log("Mined -- ", starTxn.hash);
 
         count = await galaxyPortalContract.getTotalStars();
         console.log("[After star throwing] - Retrieved total stars count from the blockchain : ", count.toNumber());
+        setTotalStars(count.toNumber());
       } else {
         console.log("Ethereum object doesn't exist!");
       }
@@ -110,27 +132,32 @@ export default function App() {
   };
 
   return (
+    
     <div className="mainContainer">
+      {loading && <div>Loading...</div>}
+      {!loading && 
+        (<div className="dataContainer">
+          <div className="header">
+            Welcome explorer 🛸
+          </div>
 
-      <div className="dataContainer">
-        <div className="header">
-          Welcome explorer 🛸
-        </div>
+          <div className="bio">
+            <p>I'm Tekk and your are on my Galaxy Portal. To enter this universe, give me a shooting star 🌠</p>
+            <p>Currently {totalStars} stars constitute the Galaxy</p>
+          </div>
 
-        <div className="bio">
-          I'm Tekk and your are on my Galaxy Portal. To enter this universe, give me a shooting star 🌠
-        </div>
-
-        <button className="starButton" onClick={star}>
-          Throw me a star ⭐️
-        </button>
-
-        {!currentAccount && (
-          <button className="starButton" onClick={connectMetamask}>
-            Connect with Metamask 🦊
+          <button className="starButton" onClick={star}>
+            Throw me a star ⭐️
           </button>
-        )}
-      </div>
+
+          {!currentAccount && (
+            <button className="starButton" onClick={connectMetamask}>
+              Connect with Metamask 🦊
+            </button>
+          )}
+        </div>)
+      }
+      
     </div>
   );
 }
