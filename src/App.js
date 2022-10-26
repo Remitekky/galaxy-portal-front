@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
-// import { ethers } from "ethers";
+import { ethers } from "ethers";
+import galaxyPortal from './utils/GalaxyPortal.json';
 import './App.css';
 
 export default function App() {
   const [currentAccount, setCurrentAccount] = useState("");
+
+  const contractAddress = "0x7bd43F22167B7f066eeA06b80d992957EdBB413a";
+  const contractABI = galaxyPortal.abi;
 
   useEffect(() => {
     const init = async () => {
@@ -70,8 +74,27 @@ export default function App() {
     setCurrentAccount(accounts[0]);
   };
 
-  const star = () => {
+  const star = async () => {
+    try {
+      const { ethereum } = window;
 
+      if (ethereum) {
+        // Use the Metamask's node provider (Metamask use Infura's Ethereum nodes)
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        // Abstract account who can sign messages and sens Txn. Cannot sign Txn
+        const signer = provider.getSigner();
+        // Get the contract interface to interact with. Need the deployement address, the ABI (JSON) and the signer
+        // Goerli : 0x7bd43F22167B7f066eeA06b80d992957EdBB413a
+        const galaxyPortalContract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        let count = await galaxyPortalContract.getTotalStars();
+        console.log("Retrieved total stars count from the blockchain : ", count.toNumber());
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
