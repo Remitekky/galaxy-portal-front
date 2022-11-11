@@ -6,9 +6,11 @@ import './App.css';
 export default function App() {
   const [currentAccount, setCurrentAccount] = useState("");
   const [totalStars, setTotalStars] = useState(0);
+  const [allStars, setAllStars] = useState([]);
+  const [messageValue, setMessageValue] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const contractAddress = "0x7bd43F22167B7f066eeA06b80d992957EdBB413a";
+  const contractAddress = "0x6aaD5B0208F5f43009a951438B7b9246C7E9c0c9";
   const contractABI = galaxyPortal.abi;
 
   useEffect(() => {
@@ -26,8 +28,17 @@ export default function App() {
           const signer = provider.getSigner();
           const galaxyPortalContract = new ethers.Contract(contractAddress, contractABI, signer);
   
-          let count = await galaxyPortalContract.getTotalStars();
+          const count = await galaxyPortalContract.getTotalStars();
           setTotalStars(count.toNumber());
+
+          const allStarsDirty = await galaxyPortalContract.getAllStars();
+          const allStartsCleaned = allStarsDirty.map((star) => ({
+            timestamp: new Date(star.timestamp * 1000),
+            explorer: star.explorer,
+            message: star.message,
+          }));
+          setAllStars(allStartsCleaned);
+
           setLoading(false);
         } catch (error) {
           console.error(error);
@@ -76,7 +87,7 @@ export default function App() {
   };
 
   /**
-   * Function to connect the user with her wallet
+   * Function to connect the user with his wallet
    * We asking metamask acces of the user's wallet to interact with our smart contract
    */
   const connectMetamask = async () => {
@@ -103,7 +114,7 @@ export default function App() {
         // Abstract account who can sign messages and sens Txn. Cannot sign Txn
         const signer = provider.getSigner();
         // Get the contract interface to interact with. Need the deployement address, the ABI (JSON) and the signer
-        // Goerli : 0x7bd43F22167B7f066eeA06b80d992957EdBB413a
+        // Goerli : 0xBdBaE474bEEBC90534068F68440E118b72d276b9
         const galaxyPortalContract = new ethers.Contract(contractAddress, contractABI, signer);
 
         // Execute the getTotalStars function of the smart contract
@@ -111,18 +122,29 @@ export default function App() {
         console.log("[Before star throwing] - Retrieved total stars count from the blockchain : ", count.toNumber());
 
         // Broadcast a Txn for the execution of star function. Metamask notification to approve the transaction
-        const starTxn = await galaxyPortalContract.star();
+        const starTxn = await galaxyPortalContract.star(messageValue);
         setLoading(true);
         console.log("Mining...", starTxn.hash);
 
         // Waiting the execution of star function 
         await starTxn.wait();
-        setLoading(false);
         console.log("Mined -- ", starTxn.hash);
-
+        
         count = await galaxyPortalContract.getTotalStars();
         console.log("[After star throwing] - Retrieved total stars count from the blockchain : ", count.toNumber());
         setTotalStars(count.toNumber());
+        
+        const allStarsDirty = await galaxyPortalContract.getAllStars();
+        const allStartsCleaned = allStarsDirty.map((star) => ({
+          timestamp: new Date(star.timestamp * 1000),
+          explorer: star.explorer,
+          message: star.message,
+        }));
+        console.log("[After message sent] - Retrieved total stars count from the blockchain : ", count.toNumber());
+        setAllStars(allStartsCleaned);
+        
+        setMessageValue("");
+        setLoading(false);
       } else {
         console.log("Ethereum object doesn't exist!");
       }
@@ -150,11 +172,24 @@ export default function App() {
             Throw me a star ⭐️
           </button>
 
+          <input type="text" className="messageInput" value={messageValue} onChange={(evt) => {
+            setMessageValue(evt.target.value);
+          }} />
+
           {!currentAccount && (
             <button className="starButton" onClick={connectMetamask}>
               Connect with Metamask 🦊
             </button>
           )}
+
+          {allStars.map((wave, index) => {
+            return (
+              <div key={index} style={{ backgroundColor: "OldLace", marginTop: "16px", padding: "8px" }}>
+                <div>Address: {wave.address}</div>
+                <div>Time: {wave.timestamp.toString()}</div>
+                <div>Message: {wave.message}</div>
+              </div>)
+          })}
         </div>)
       }
       

@@ -31,5 +31,13 @@
   padding: 8px;
   border: 0;
   border-radius: 5px;
+}
 
+.messageInput {
+  height: 50px;
+  font-size: 1.3em;
+  margin-top: 16px;
+  padding: 8px;
+  border: 0;
+  border-radius: 5px;
 }
