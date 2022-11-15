@@ -10,7 +10,7 @@ export default function App() {
   const [messageValue, setMessageValue] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const contractAddress = "0x6aaD5B0208F5f43009a951438B7b9246C7E9c0c9";
+  const contractAddress = "0xC116F3c8be2f1b647A8E93470125b12eCF809C2a";
   const contractABI = galaxyPortal.abi;
 
   useEffect(() => {
